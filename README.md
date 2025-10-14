@@ -119,23 +119,23 @@ Bibeli is a mobile Bible study companion that helps Christians understand Script
 
 ### Architecture Overview
 
-┌───────────────────────────────────────────────────────────┐
-│                    FRONTEND LAYER                         │
-│                  (React Native + Expo)                    │
-│                                                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ Study Session│  │  Conversation│  │    Streak    │     │
-│  │  Interface   │  │   History    │  │   Tracking   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                           │
-│         Zustand State    │    React Query Cache           │
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND LAYER                           │
+│                  (React Native + Expo)                      │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ Study Session│  │  Conversation│  │    Streak    │    │
+│  │  Interface   │  │   History    │  │   Tracking   │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                             │
+│         Zustand State    │    React Query Cache            │
 └─────────────────────────┼─────────────────────────────────┘
 │
 Supabase Client SDK
 │
-┌─────────────────────────┼────────────────────────────────┐
-│                  BACKEND LAYER (Supabase)                │
-│                                                          │
+┌─────────────────────────┼─────────────────────────────────┐
+│                  BACKEND LAYER (Supabase)                   │
+│                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
 │  │   Supabase   │  │  PostgreSQL  │  │     Edge     │    │
 │  │     Auth     │  │   Database   │  │  Functions   │    │
@@ -144,13 +144,13 @@ Supabase Client SDK
 │  │ • OAuth      │  │ • Sessions   │  │ • STT/TTS    │    │
 │  │ • JWT Tokens │  │ • Streaks    │  │ • Security   │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
-└─────────────────────────┼────────────────────────────────┘
+└─────────────────────────┼─────────────────────────────────┘
 │
 Edge Functions Call External APIs
 │
-┌─────────────────────────┼────────────────────────────────┐
-│              AI & EXTERNAL SERVICES                      │
-│                                                          │
+┌─────────────────────────┼─────────────────────────────────┐
+│              AI & EXTERNAL SERVICES                         │
+│                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
 │  │   Deepgram   │  │   OpenAI     │  │  OpenAI TTS  │    │
 │  │     API      │  │   GPT-4      │  │              │    │
@@ -158,4 +158,4 @@ Edge Functions Call External APIs
 │  │ Speech-to-   │  │ Theological  │  │ Natural Voice│    │
 │  │    Text      │  │  Responses   │  │   Output     │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
-└──────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
