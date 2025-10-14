@@ -341,11 +341,7 @@ Edge Functions Call External APIs
 - OpenAI API key
 - Deepgram API key
 
-### Clone the Repository
-```bash
-git clone https://github.com/yourusername/bibeli.git
-cd bibeli```
-
+- Clone the Repository
 - Run npm install
 - Configure Supabase database and environmental variables
 - Run npx expo start
