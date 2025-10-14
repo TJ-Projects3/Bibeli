@@ -159,3 +159,95 @@ Edge Functions Call External APIs
 │  │    Text      │  │  Responses   │  │   Output     │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
 └─────────────────────────────────────────────────────────────┘
+
+### Data Flow: Complete Study Session
+
+**Step 1:** User opens app → Supabase Client checks auth → Loads user data
+**Step 2:** User taps microphone → Expo AV records audio
+**Step 3:** Audio sent to Edge Function → Forwarded to Deepgram → Returns transcript
+**Step 4:** Frontend displays user's question in chat
+**Step 5:** Frontend calls Edge Function with transcript + context
+**Step 6:** Edge Function retrieves conversation history from PostgreSQL
+**Step 7:** Edge Function calls OpenAI GPT-4 with system prompt + context
+**Step 8:** AI response saved to database + study session updated
+**Step 9:** Text sent to OpenAI TTS → Returns audio file
+**Step 10:** Frontend displays text + plays audio via Expo AV
+**Step 11:** If 2+ minutes elapsed → Streak updated in database
+**Step 12:** User ends session → Frontend finalizes + schedules notification
+
+### Database Schema
+
+**Users Table**
+- `id` (UUID, Primary Key)
+- `email` (String, Unique)
+- `created_at` (Timestamp)
+- `knowledge_level` (Enum: beginner, intermediate, advanced)
+- `preferred_study_time` (Time)
+- `notification_enabled` (Boolean)
+
+**Study Sessions Table**
+- `id` (UUID, Primary Key)
+- `user_id` (UUID, Foreign Key → Users)
+- `started_at` (Timestamp)
+- `ended_at` (Timestamp)
+- `duration_seconds` (Integer)
+- `passage_reference` (String, e.g., "John 3:16")
+- `completed` (Boolean)
+
+**Conversations Table**
+- `id` (UUID, Primary Key)
+- `session_id` (UUID, Foreign Key → Study Sessions)
+- `user_id` (UUID, Foreign Key → Users)
+- `role` (Enum: user, assistant)
+- `content` (Text)
+- `timestamp` (Timestamp)
+
+**Streaks Table**
+- `id` (UUID, Primary Key)
+- `user_id` (UUID, Foreign Key → Users)
+- `current_streak` (Integer)
+- `longest_streak` (Integer)
+- `last_study_date` (Date)
+- `total_study_days` (Integer)
+
+---
+
+## 🤖 AI Implementation
+
+### AI Features & Capabilities
+
+**Conversational Bible Study Partner**
+- Natural, multi-turn conversations about any Bible passage or theological topic
+- Contextual awareness that remembers earlier discussion in the session
+- Asks clarifying questions to understand user's learning goals
+- Adapts explanation depth based on user's biblical knowledge level
+
+**Biblical Knowledge & Accuracy**
+- Provides historical and cultural context for passages
+- Explains original Greek/Hebrew word meanings when relevant
+- Cites specific Bible verses to support theological claims
+- Cross-references related passages across testaments
+- Identifies literary genres and explains interpretation principles
+
+**Theological Guardrails**
+- Maintains orthodox Christian theology aligned with historical creeds
+- Acknowledges theological debates on secondary issues without being dogmatic
+- Presents multiple orthodox perspectives when denominations differ
+- Refuses to provide heretical interpretations or harmful advice
+- Redirects users expressing concerning thoughts to appropriate resources
+
+**Practical Application**
+- Helps users connect ancient Scripture to modern life situations
+- Asks reflective questions to deepen personal engagement
+- Suggests practical ways to apply biblical principles
+- Provides contemporary examples and analogies
+
+### Technical Implementation
+
+**AI Model Configuration**
+- Model: OpenAI GPT-4 Turbo
+- Temperature: 0.7 (balanced creativity and consistency)
+- Max Tokens: 500-800 per response
+- Context Window: Last 5-8 conversation turns for continuity
+
+**System Prompt Design**
