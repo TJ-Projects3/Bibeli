@@ -344,7 +344,7 @@ Edge Functions Call External APIs
 ### Clone the Repository
 ```bash
 git clone https://github.com/yourusername/bibeli.git
-cd bibeli
+cd bibeli```
 
 - Run npm install
 - Configure Supabase database and environmental variables
