@@ -250,4 +250,98 @@ Edge Functions Call External APIs
 - Max Tokens: 500-800 per response
 - Context Window: Last 5-8 conversation turns for continuity
 
-**System Prompt Design**
+**Voice Processing Pipeline**
+- **STT (Deepgram Nova-2):** Real-time transcription with punctuation
+- **TTS (OpenAI):** "Alloy" voice for warm, natural tone at 1.0x speed
+- **Format:** MP3 for compatibility and reasonable file size
+
+**Edge Function Architecture**
+- `transcribe-audio`: Frontend → Deepgram API → Return transcript
+- `chat-with-ai`: Retrieve context → OpenAI API → Save to DB → Return response
+- `generate-speech`: AI text → OpenAI TTS → Return audio URL
+
+**Content Safety**
+- Input validation for inappropriate requests
+- OpenAI Moderation API for harmful content detection
+- Self-harm detection triggers crisis resource recommendations
+- Theological review process for flagged responses
+
+**Performance Optimization**
+- Parallel processing: TTS generation while saving to database
+- Error handling with 3 retry attempts and exponential backoff
+- 15-second timeout for AI responses, 10 seconds for TTS
+- Rate limiting: Per-user API call limits to prevent abuse
+
+---
+
+## 📋 Project Requirements
+
+### Functional Requirements (MVP)
+
+**User Authentication**
+- Allow immediate app usage without account (anonymous mode)
+- Prompt account creation after 3rd session for data persistence
+- Email/password and OAuth (Google, Apple) sign-in
+- Secure JWT-based session management
+
+**AI Conversation Engine**
+- Voice input via device microphone (Deepgram STT)
+- Text input via keyboard as alternative
+- Voice output with text-to-speech (OpenAI TTS)
+- Conversation history saved with timestamps
+- 2+ minute engagement threshold for streak completion
+
+**Streak Tracking**
+- Daily streak counter with current and longest streak display
+- Milestone badges at 7, 14, 30, 60, 100, 365 days
+- Calendar heat map visualization
+- Statistics: total study days, passages studied, questions asked
+- Timezone-aware daily resets at midnight local time
+
+**Notifications**
+- One daily reminder at user-specified time
+- Skip notification if user already studied that day
+- Encouraging, grace-filled messaging (10+ varied messages)
+- Snooze functionality (30min, 1hr, 2hr options)
+- In-app notification settings management
+
+**Conversation Management**
+- View past study sessions chronologically
+- Search history by passage, keyword, or date
+- Delete individual conversations or entire history
+- Export conversations (PDF/text) for personal records
+
+### Non-Functional Requirements
+
+**Performance**
+- App launch: <2 seconds on modern devices
+- Voice recognition: <500ms processing start time
+- AI response: <3 seconds for 90% of queries
+- Support iOS 14+ and Android 10+
+
+**Security**
+- End-to-end encrypted data transmission (HTTPS/TLS)
+- Supabase Row-Level Security for database access
+- API keys never exposed to client code
+- GDPR and CCPA compliance for data privacy
+
+**Scalability**
+- Support 10,000+ concurrent users
+- Database optimized for conversation history growth
+- Edge Functions auto-scale with demand
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm/yarn
+- Expo CLI (`npm install -g expo-cli`)
+- Supabase account (free tier available)
+- OpenAI API key
+- Deepgram API key
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/yourusername/bibeli.git
+cd bibeli
