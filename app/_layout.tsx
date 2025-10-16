@@ -2,9 +2,10 @@ import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return <Stack>
-    <Stack.Screen name="(tabs)"
+      <Stack.Screen name="(tabs)"
     options={{
       headerTitle: "Bibeli",
+      headerShown: false,
       headerLeft: () => <></>
     }} />
     <Stack.Screen name="+not-found" options={{}} />

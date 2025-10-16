@@ -1,13 +1,9 @@
-import { Link } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Bibeli</Text>
-      <Link href={"./voice"}>
-        <Text style={styles.link}>Open Voice</Text>
-      </Link>
     </View>
   );
 }
@@ -17,14 +13,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#25292e",
+    backgroundColor: "#FFFCF5", // Warm off-white (Claude-like)
+    padding: 20,
   },
 
   text: {
-    color: "#fff",
+    color: "#8B4513", // SaddleBrown
+    fontSize: 28,
+    fontWeight: "bold",
   },
   link: {
-    color: "#1e90ff",
+    color: "#A0522D", // Sienna
     marginTop: 12,
+    fontSize: 16,
   },
 });
