@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: "#8B4513", // SaddleBrown
+    color: "#A0522D", // Sienna
     fontSize: 24,
     fontWeight: "bold",
   },

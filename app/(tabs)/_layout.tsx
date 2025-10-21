@@ -5,19 +5,12 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#8B4513", // SaddleBrown
+        tabBarActiveTintColor: "#A0522D", // Sienna
         tabBarInactiveTintColor: "#D2B48C", // Tan
         tabBarStyle: {
           backgroundColor: "#FFFCF5", // Warm off-white (Claude-like)
         },
-        headerStyle: {
-          backgroundColor: "#FFFCF5", // Match page background
-        },
-        headerTitleStyle: {
-          color: "#5C3A21", // Deep brown for titles
-        },
-        headerTintColor: "#5C3A21",
-        headerShadowVisible: false,
+        headerShown: false, // Remove headers for cleaner look
         sceneStyle: {
           backgroundColor: "#FFFCF5", // Ensure screen background matches
         },
@@ -26,8 +19,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          headerTitle: "Bibeli",
-          headerLeft: () => <></>,
           tabBarIcon: ({ color }) => (
             <FontAwesome name="home" size={24} color={color} />
           ),
@@ -36,7 +27,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="voice"
         options={{
-          headerTitle: "Voice Chat",
           tabBarIcon: ({ color }) => (
             <FontAwesome name="microphone" size={24} color={color} />
           ),
@@ -45,7 +35,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          headerTitle: "Profile",
           tabBarIcon: ({ color }) => (
             <FontAwesome name="user" size={24} color={color} />
           ),
