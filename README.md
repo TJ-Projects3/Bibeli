@@ -1,7 +1,5 @@
 # 📖 Bibeli - AI-Powered Bible Study Companion
 
-[Logo/Banner Image Placeholder]
-
 [![React Native](https://img.shields.io/badge/React%20Native-Expo-blue)](https://expo.dev/)
 [![Supabase](https://img.shields.io/badge/Backend-Supabase-green)](https://supabase.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI%20GPT--4-orange)](https://openai.com/)
