@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
+import VoiceChat from "@/components/VoiceChat";
 
-export default function VoiceChat() {
+export default function VoicePage() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Ask me anything!</Text>
+      <VoiceChat />
     </View>
   );
 }
