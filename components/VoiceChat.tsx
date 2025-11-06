@@ -1,64 +1,165 @@
+import { useWebSpeechRecognition } from "@/hooks/useWebSpeechRecognition";
+import { useWebSpeechSynthesis } from "@/hooks/useWebSpeechSynthesis";
+import { transcribeAudio } from "@/utils/deepgram";
+import { callGeminiAPI } from "@/utils/gemini";
 import { Audio } from "expo-av";
-import { useEffect, useRef, useState } from "react";
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Platform, View } from "react-native";
+import { voiceChatStyles } from "./VoiceChat.styles";
+import { VoiceChatUI } from "./VoiceChatUI";
 
 export default function VoiceChat() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [AIResponse, setAIResponse] = useState("");
+  const [isLoadingAIResponse, setIsLoadingAIResponse] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recordingRef = useRef<Audio.Recording | null>(null);
+  const [micLevel, setMicLevel] = useState(0);
 
-  // For Web Speech API
-  const recognitionRef = useRef<any>(null);
+  // Refs for web microphone metering
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const dataArrayRef = useRef<Float32Array | null>(null);
+  const byteArrayRef = useRef<Uint8Array | null>(null);
 
-  // Initialize Web Speech API on web
-  useEffect(() => {
-    if (Platform.OS === "web" && typeof window !== "undefined") {
-      // Check if browser supports Web Speech API
-      const SpeechRecognition =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true; // Keep listening
-        recognitionRef.current.interimResults = true; // Show partial results
+  // Web Speech API hook
+  const recognitionRef = useWebSpeechRecognition(setTranscript);
+  
+  // Web Speech Synthesis hook for audio output
+  const { speak, stopSpeaking, isSpeaking, audioLevel: outputAudioLevel } = useWebSpeechSynthesis();
 
-        // When speech is recognized, update transcript
-        recognitionRef.current.onresult = (event: any) => {
-          let interimTranscript = "";
-          let finalTranscript = "";
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript + " ";
-            } else {
-              interimTranscript += transcript;
-            }
-          }
-
-          const fullTranscript = finalTranscript || interimTranscript;
-          setTranscript(fullTranscript);
-          console.log("Transcript:", fullTranscript); // Console log as requested
-        };
-
-        recognitionRef.current.onerror = (event: any) => {
-          console.error("Speech recognition error:", event.error);
-        };
-      }
+  // Call Gemini API with the transcript
+  const handleGeminiCall = useCallback(async (userMessage: string) => {
+    if (!userMessage.trim()) {
+      console.log("Empty transcript, skipping AI call");
+      return;
     }
+
+    setIsLoadingAIResponse(true);
+    setAIResponse("");
+
+    try {
+      const responseText = await callGeminiAPI(userMessage);
+      setAIResponse(responseText);
+      console.log("✅ Gemini API response:", responseText);
+      
+      // Speak the AI response using text-to-speech
+      if (Platform.OS === "web") {
+        speak(responseText);
+      }
+    } catch (error: any) {
+      console.error("❌ Gemini API error:", error);
+      setAIResponse(`Error: ${error.message || "Failed to get AI response"}`);
+    } finally {
+      setIsLoadingAIResponse(false);
+    }
+  }, [speak]);
+
+  const stopWebMicMonitor = useCallback(async () => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (analyserRef.current) {
+      analyserRef.current.disconnect();
+      analyserRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      await audioContextRef.current.close().catch(() => null);
+      audioContextRef.current = null;
+    }
+
+    dataArrayRef.current = null;
+    byteArrayRef.current = null;
+    setMicLevel(0);
   }, []);
+
+  const startWebMicMonitor = useCallback(async () => {
+    if (audioContextRef.current) {
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+
+      const bufferLength = analyser.fftSize;
+      const dataArray = new Float32Array(bufferLength);
+      const byteArray = new Uint8Array(bufferLength);
+
+      source.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      mediaStreamRef.current = stream;
+      dataArrayRef.current = dataArray;
+      byteArrayRef.current = byteArray;
+
+      const updateLevel = () => {
+        const analyserNode = analyserRef.current;
+        const array = dataArrayRef.current;
+
+        if (!analyserNode || !array) {
+          return;
+        }
+
+        if (typeof analyserNode.getFloatTimeDomainData === "function") {
+          analyserNode.getFloatTimeDomainData(array as any);
+        } else {
+          const fallbackArray = byteArrayRef.current;
+          if (!fallbackArray) {
+            return;
+          }
+          analyserNode.getByteTimeDomainData(fallbackArray as any);
+          for (let i = 0; i < fallbackArray.length; i += 1) {
+            array[i] = fallbackArray[i] / 128 - 1;
+          }
+        }
+
+        let sumSquares = 0;
+        for (let i = 0; i < array.length; i += 1) {
+          const sample = array[i];
+          sumSquares += sample * sample;
+        }
+
+        const rms = Math.sqrt(sumSquares / array.length);
+        setMicLevel(rms);
+
+        animationFrameRef.current = requestAnimationFrame(updateLevel);
+      };
+
+      updateLevel();
+    } catch (error) {
+      console.error("Web audio metering failed:", error);
+      await stopWebMicMonitor();
+    }
+  }, [stopWebMicMonitor]);
 
   const startRecording = async () => {
     try {
+      // Clear previous responses when starting new recording
+      setAIResponse("");
+      setMicLevel(0);
+
       if (Platform.OS === "web") {
         // Use Web Speech API on web
         if (recognitionRef.current) {
+          await startWebMicMonitor();
           recognitionRef.current.start();
           setIsRecording(true);
           console.log("Started recording (Web Speech API)");
@@ -80,17 +181,33 @@ export default function VoiceChat() {
           playsInSilentModeIOS: true,
         });
 
+        const highQuality = Audio.RecordingOptionsPresets.HIGH_QUALITY;
+        const recordingOptions: Audio.RecordingOptions = {
+          ...highQuality,
+          isMeteringEnabled: true,
+        };
+
         // Start recording
         const { recording: newRecording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
+          recordingOptions,
+          (status) => {
+            const metering =
+              "metering" in status && typeof status.metering === "number"
+                ? status.metering
+                : undefined;
+
+            if (typeof metering === "number") {
+              const level = Math.max(0, Math.min(1, (metering + 160) / 160));
+              setMicLevel(level);
+            }
+          },
+          100
         );
 
+        recordingRef.current = newRecording;
         setRecording(newRecording);
         setIsRecording(true);
         console.log("Started recording (expo-av)");
-        console.log(
-          "Note: For STT on mobile, you'll need to integrate with Deepgram API"
-        );
       }
     } catch (err) {
       console.error("Failed to start recording:", err);
@@ -106,6 +223,13 @@ export default function VoiceChat() {
           setIsRecording(false);
           console.log("Stopped recording (Web Speech API)");
           console.log("Final transcript:", transcript);
+
+          await stopWebMicMonitor();
+
+          // Call Gemini API with the transcript
+          if (transcript.trim()) {
+            await handleGeminiCall(transcript);
+          }
         }
       } else {
         // Stop expo-av recording and transcribe with Deepgram
@@ -119,83 +243,27 @@ export default function VoiceChat() {
           const uri = recording.getURI();
           console.log("Recording stopped. Audio file:", uri);
 
+          recording.setOnRecordingStatusUpdate(null);
+
+          setMicLevel(0);
+
           // Transcribe audio with Deepgram
           if (uri) {
-            await transcribeAudio(uri);
+            try {
+              const transcribedText = await transcribeAudio(uri);
+              setTranscript(transcribedText);
+              console.log("Transcript:", transcribedText);
+              await handleGeminiCall(transcribedText);
+            } catch (error) {
+              console.error("Failed to transcribe audio:", error);
+            }
           }
-
+          recordingRef.current = null;
           setRecording(null);
         }
       }
     } catch (err) {
       console.error("Failed to stop recording:", err);
-    }
-  };
-
-  // Transcribe audio using Deepgram API
-  const transcribeAudio = async (audioUri: string) => {
-    try {
-      // For mobile: Read file and convert to blob
-      let blob: Blob;
-
-      if (Platform.OS === "web") {
-        // Web: fetch directly
-        const response = await fetch(audioUri);
-        blob = await response.blob();
-      } else {
-        // Mobile: Use FileSystem to read the file
-        // Convert file:// URI to readable format
-        const response = await fetch(audioUri);
-        blob = await response.blob();
-      }
-
-      // Get Deepgram API key from environment variables
-      // NOTE: In Expo, environment variables must be prefixed with EXPO_PUBLIC_
-      // Create a .env.local file with: EXPO_PUBLIC_DEEPGRAM_API_KEY=your_key_here
-      // For security: In production, use Supabase Edge Functions instead!
-      const DEEPGRAM_API_KEY = process.env.EXPO_PUBLIC_DEEPGRAM_API_KEY || "";
-
-      if (!DEEPGRAM_API_KEY) {
-        console.error(
-          "Please set EXPO_PUBLIC_DEEPGRAM_API_KEY in your .env file or app.config.js!"
-        );
-        return;
-      }
-
-      // Send audio to Deepgram for transcription
-      const formData = new FormData();
-      formData.append("audio", blob, "recording.m4a");
-
-      const transcriptResponse = await fetch(
-        "https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&language=en",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Token ${DEEPGRAM_API_KEY}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!transcriptResponse.ok) {
-        throw new Error("Deepgram API request failed");
-      }
-
-      const transcriptData = await transcriptResponse.json();
-
-      // Extract transcript from Deepgram response
-      const transcribedText =
-        transcriptData.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
-        "";
-
-      if (transcribedText) {
-        setTranscript(transcribedText);
-        console.log("Transcript:", transcribedText);
-      } else {
-        console.error("No transcript received from Deepgram");
-      }
-    } catch (error) {
-      console.error("Failed to transcribe audio:", error);
     }
   };
 
@@ -207,75 +275,42 @@ export default function VoiceChat() {
     }
   };
 
+  const handleCancel = () => {
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+
+    stopWebMicMonitor();
+    stopSpeaking();
+    setTranscript("");
+    setAIResponse("");
+    setMicLevel(0);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopWebMicMonitor();
+      const activeRecording = recordingRef.current;
+      if (activeRecording) {
+        activeRecording.stopAndUnloadAsync().catch(() => null);
+      }
+    };
+  }, [stopWebMicMonitor]);
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.circle, isRecording && styles.circleRecording]}
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.circleText}>{isRecording ? "⏹" : "🎤"}</Text>
-      </TouchableOpacity>
-
-      {transcript ? (
-        <Text style={styles.transcript}>{transcript}</Text>
-      ) : (
-        <Text style={styles.placeholder}>
-          {isRecording ? "Listening..." : "Tap to start recording"}
-        </Text>
-      )}
-
-      {Platform.OS !== "web" && (
-        <Text style={styles.note}>
-          Mobile: Audio recorded. Integrate Deepgram for STT.
-        </Text>
-      )}
+    <View style={voiceChatStyles.container}>
+      <VoiceChatUI
+        isRecording={isRecording}
+        transcript={transcript}
+        isLoadingAI={isLoadingAIResponse}
+        aiResponse={AIResponse}
+        micLevel={micLevel}
+        outputAudioLevel={outputAudioLevel}
+        isSpeaking={isSpeaking}
+        onToggleRecording={handlePress}
+        onCancel={handleCancel}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#A0522D",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  circleRecording: {
-    backgroundColor: "#DC143C",
-  },
-  circleText: {
-    fontSize: 40,
-  },
-  transcript: {
-    color: "#A0522D",
-    fontSize: 18,
-    textAlign: "center",
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  placeholder: {
-    color: "#A0522D",
-    fontSize: 16,
-    opacity: 0.6,
-    textAlign: "center",
-    marginTop: 20,
-  },
-  note: {
-    color: "#A0522D",
-    fontSize: 12,
-    opacity: 0.5,
-    textAlign: "center",
-    marginTop: 10,
-    fontStyle: "italic",
-  },
-});

@@ -1,0 +1,134 @@
+import { StyleSheet } from "react-native";
+
+const ORB_SIZE = 164;
+const WAVE_SIZE = 240;
+
+export const voiceChatStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    width: "100%",
+  },
+  stage: {
+    width: "100%",
+    alignItems: "center",
+  },
+  circleWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 48,
+    marginTop: 20,
+    borderRadius: 1000,
+    overflow: "hidden",
+  },
+  circleImage: {
+    width: "100%",
+    height: "100%",
+  },
+  statusText: {
+    textAlign: "center",
+    color: "#4A5568",
+    fontSize: 16,
+    marginBottom: 56,
+    fontWeight: "500",
+  },
+  controlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 0,
+    marginBottom: 32,
+  },
+  controlButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F7",
+    marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  controlButtonPrimary: {
+    backgroundColor: "#8B5A3C",
+  },
+  controlButtonRecording: {
+    backgroundColor: "#A0522D",
+  },
+  controlButtonPressed: {
+    transform: [{ scale: 0.94 }],
+    opacity: 0.9,
+  },
+  transcriptContainer: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginTop: 36,
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 5,
+  },
+  transcript: {
+    color: "#0F172A",
+    fontSize: 17,
+    lineHeight: 24,
+  },
+  placeholder: {
+    color: "#5F6B7B",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 28,
+  },
+  responseContainer: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#F5F0E8",
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginTop: 18,
+    shadowColor: "#8B5A3C",
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "rgba(139, 90, 60, 0.1)",
+  },
+  label: {
+    color: "#5F6B7B",
+    fontSize: 14,
+    letterSpacing: 0.2,
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  AI: {
+    color: "#1B2A4B",
+    fontSize: 17,
+    lineHeight: 24,
+  },
+  loadingText: {
+    color: "#1B2A4B",
+    fontSize: 15,
+    marginTop: 8,
+    fontStyle: "italic",
+  },
+  note: {
+    color: "#5F6B7B",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 16,
+  },
+});
+

@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     // Get the Gemini Pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Generate content
     const prompt = "Write a haiku about code.";
