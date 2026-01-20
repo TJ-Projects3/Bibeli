@@ -157,58 +157,65 @@ export default function Profile() {
           activeOpacity={1}
           onPress={() => setShowModal(false)}
         >
-          <TouchableOpacity
-            style={styles.modalContent}
-            activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
+          <ScrollView
+            style={styles.modalScrollContainer}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.modalTitle}>Set a New Goal</Text>
+            <TouchableOpacity
+              style={styles.modalContent}
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text style={styles.modalTitle}>Set a New Goal</Text>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Goal Description</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Read the Gospel of Matthew"
-                placeholderTextColor="#D2B48C"
-                value={goalText}
-                onChangeText={setGoalText}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Goal Description</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g., Read the Gospel of Matthew"
+                  placeholderTextColor="#D2B48C"
+                  value={goalText}
+                  onChangeText={setGoalText}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
 
-            <View style={[styles.formGroup, { zIndex: 100 }]}>
-              <Text style={styles.formLabel}>Deadline</Text>
-              <DatePicker
-                value={deadline}
-                onChange={setDeadline}
-                minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
-              />
-            </View>
+              <View style={[styles.formGroup, { zIndex: 100 }]}>
+                <Text style={styles.formLabel}>Deadline</Text>
+                <DatePicker
+                  value={deadline}
+                  onChange={setDeadline}
+                  minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
+                />
+              </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowModal(false);
-                  setGoalText("");
-                  setDeadline(new Date());
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  (!goalText.trim() || !deadline) && styles.saveButtonDisabled,
-                ]}
-                onPress={handleAddGoal}
-                disabled={!goalText.trim() || !deadline}
-              >
-                <Text style={styles.saveButtonText}>Save Goal</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowModal(false);
+                    setGoalText("");
+                    setDeadline(new Date());
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.saveButton,
+                    (!goalText.trim() || !deadline) && styles.saveButtonDisabled,
+                  ]}
+                  onPress={handleAddGoal}
+                  disabled={!goalText.trim() || !deadline}
+                >
+                  <Text style={styles.saveButtonText}>Save Goal</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
         </TouchableOpacity>
       </Modal>
     </ScrollView>
@@ -363,8 +370,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalScrollContainer: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 40,
   },
   modalContent: {
     width: "90%",

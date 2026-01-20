@@ -1,8 +1,10 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
+  Dimensions,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -100,8 +102,12 @@ function MobileDatePicker({ value, onChange, minimumDate }: DatePickerProps) {
 }
 
 // ============ Web Calendar (using react-native-ui-datepicker) ============
+const CALENDAR_HEIGHT = 350;
+
 function WebCalendar({ value, onChange, minimumDate }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openAbove, setOpenAbove] = useState(false);
+  const buttonRef = useRef<View>(null);
   const defaultStyles = useDefaultStyles();
 
   const formatDate = (date: Date) => {
@@ -121,11 +127,30 @@ function WebCalendar({ value, onChange, minimumDate }: DatePickerProps) {
     }
   };
 
+  const handleToggleCalendar = useCallback(() => {
+    if (!isOpen && buttonRef.current) {
+      // Measure button position before opening
+      buttonRef.current.measure((_x, _y, _width, height, _pageX, pageY) => {
+        const screenHeight = Dimensions.get("window").height;
+        const spaceBelow = screenHeight - pageY - height;
+        const spaceAbove = pageY;
+
+        // Open above if not enough space below and more space above
+        const shouldOpenAbove = spaceBelow < CALENDAR_HEIGHT + 20 && spaceAbove > spaceBelow;
+        setOpenAbove(shouldOpenAbove);
+        setIsOpen(true);
+      });
+    } else {
+      setIsOpen(false);
+    }
+  }, [isOpen]);
+
   return (
     <View style={styles.webCalendarContainer}>
       <Pressable
+        ref={buttonRef}
         style={styles.datePickerButton}
-        onPress={() => setIsOpen(!isOpen)}
+        onPress={handleToggleCalendar}
       >
         <FontAwesome name="calendar" size={18} color="#A0522D" />
         <Text style={styles.datePickerText}>{formatDate(value)}</Text>
@@ -138,42 +163,52 @@ function WebCalendar({ value, onChange, minimumDate }: DatePickerProps) {
       </Pressable>
 
       {isOpen && (
-        <View style={styles.calendarDropdown}>
-          <DateTimePickerUI
-            mode="single"
-            date={value}
-            onChange={handleDateChange}
-            minDate={minimumDate}
-            styles={{
-              ...defaultStyles,
-              today: {
-                borderColor: "#A0522D",
-                borderWidth: 1,
-              },
-              selected: {
-                backgroundColor: "#A0522D",
-              },
-              selected_label: {
-                color: "#FFFCF5",
-              },
-              day_label: {
-                color: "#A0522D",
-              },
-              weekday_label: {
-                color: "rgba(160, 82, 45, 0.6)",
-              },
-              month_label: {
-                color: "#A0522D",
-                fontWeight: "600",
-              },
-              year_label: {
-                color: "#A0522D",
-              },
-              disabled_label: {
-                color: "rgba(160, 82, 45, 0.4)",
-              },
-            }}
-          />
+        <View style={[
+          styles.calendarDropdown,
+          openAbove ? styles.calendarDropdownAbove : styles.calendarDropdownBelow
+        ]}>
+          <ScrollView
+            style={styles.calendarScrollView}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+          >
+            <DateTimePickerUI
+              mode="single"
+              date={value}
+              onChange={handleDateChange}
+              minDate={minimumDate}
+              styles={{
+                ...defaultStyles,
+                today: {
+                  borderColor: "#A0522D",
+                  borderWidth: 1,
+                },
+                selected: {
+                  backgroundColor: "#A0522D",
+                },
+                selected_label: {
+                  color: "#FFFCF5",
+                },
+                day_label: {
+                  color: "#A0522D",
+                },
+                weekday_label: {
+                  color: "rgba(160, 82, 45, 0.6)",
+                },
+                month_label: {
+                  color: "#A0522D",
+                  fontWeight: "600",
+                },
+                year_label: {
+                  color: "#A0522D",
+                },
+                disabled_label: {
+                  color: "rgba(160, 82, 45, 0.4)",
+                },
+              }}
+            />
+            <View style={styles.calendarBottomPadding} />
+          </ScrollView>
         </View>
       )}
     </View>
@@ -219,20 +254,34 @@ const styles = StyleSheet.create({
   },
   calendarDropdown: {
     position: "absolute",
-    top: "100%",
     left: 0,
     right: 0,
-    marginTop: 8,
     backgroundColor: "#FFFCF5",
     borderRadius: 15,
     borderWidth: 1,
     borderColor: "rgba(160, 82, 45, 0.2)",
     padding: 10,
     shadowColor: "#A0522D",
-    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
     zIndex: 1000,
+    maxHeight: 350,
+  },
+  calendarDropdownBelow: {
+    top: "100%",
+    marginTop: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  calendarDropdownAbove: {
+    bottom: "100%",
+    marginBottom: 8,
+    shadowOffset: { width: 0, height: -4 },
+  },
+  calendarScrollView: {
+    flex: 1,
+  },
+  calendarBottomPadding: {
+    height: 20,
   },
 });
