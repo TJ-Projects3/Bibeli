@@ -1,7 +1,7 @@
 import ImageViewer from "@/components/ImageViewer";
-import { Image, StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ScrollView, Platform } from "react-native";
+import { DatePicker } from "@/components/DatePicker";
+import { Image, StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { useState } from "react";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { FontAwesome } from "@expo/vector-icons";
 
 const backgroundImage = require("../../assets/images/profile-background-2.png");
@@ -19,7 +19,6 @@ export default function Profile() {
   const [showModal, setShowModal] = useState(false);
   const [goalText, setGoalText] = useState("");
   const [deadline, setDeadline] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleAddGoal = () => {
     if (goalText.trim() && deadline) {
@@ -50,20 +49,6 @@ export default function Profile() {
       day: "numeric",
       year: "numeric",
     });
-  };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-      if (event.type === "set" && selectedDate) {
-        setDeadline(selectedDate);
-      }
-    } else {
-      // iOS - update date as user changes it in spinner
-      if (selectedDate) {
-        setDeadline(selectedDate);
-      }
-    }
   };
 
   return (
@@ -192,56 +177,13 @@ export default function Profile() {
               />
             </View>
 
-            <View style={styles.formGroup}>
+            <View style={[styles.formGroup, { zIndex: 100 }]}>
               <Text style={styles.formLabel}>Deadline</Text>
-              {Platform.OS === "web" ? (
-                <TextInput
-                  style={styles.textInput}
-                  // @ts-ignore - web-specific prop
-                  type="date"
-                  value={deadline.toISOString().split('T')[0]}
-                  onChange={(e: any) => {
-                    const text = e.target?.value || e.nativeEvent?.text;
-                    if (text) {
-                      const date = new Date(text);
-                      if (date && !isNaN(date.getTime())) {
-                        setDeadline(date);
-                      }
-                    }
-                  }}
-                  // @ts-ignore - web-specific prop
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.datePickerButton}
-                    onPress={() => setShowDatePicker(true)}
-                  >
-                    <FontAwesome name="calendar" size={18} color="#A0522D" />
-                    <Text style={styles.datePickerText}>
-                      {formatDate(deadline)}
-                    </Text>
-                  </TouchableOpacity>
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={deadline}
-                      mode="date"
-                      display={Platform.OS === "ios" ? "spinner" : "default"}
-                      onChange={handleDateChange}
-                      minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
-                    />
-                  )}
-                  {Platform.OS === "ios" && showDatePicker && (
-                    <TouchableOpacity
-                      style={styles.datePickerCloseButton}
-                      onPress={() => setShowDatePicker(false)}
-                    >
-                      <Text style={styles.datePickerCloseButtonText}>Done</Text>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
+              <DatePicker
+                value={deadline}
+                onChange={setDeadline}
+                minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
+              />
             </View>
 
             <View style={styles.modalButtons}>
@@ -467,34 +409,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 80,
     textAlignVertical: "top",
-  },
-  datePickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(160, 82, 45, 0.1)",
-    borderRadius: 15,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: "rgba(160, 82, 45, 0.2)",
-    gap: 10,
-  },
-  datePickerText: {
-    fontSize: 16,
-    color: "#A0522D",
-    fontWeight: "500",
-  },
-  datePickerCloseButton: {
-    marginTop: 10,
-    backgroundColor: "#A0522D",
-    borderRadius: 15,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  datePickerCloseButtonText: {
-    color: "#FFFCF5",
-    fontSize: 16,
-    fontWeight: "600",
   },
   modalButtons: {
     flexDirection: "row",

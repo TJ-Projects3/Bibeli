@@ -14,6 +14,43 @@ export const voiceChatStyles = StyleSheet.create({
   stage: {
     width: "100%",
     alignItems: "center",
+    position: "relative",
+  },
+  // Moved the chat icon button higher by increasing `top` negative value,
+  // and removed unnecessary shadow (handled by badge/circle), border, elevation, and zIndex for simplicity.
+  chatIconButton: {
+    position: "absolute",
+    top: -120, // Move button higher above navbar area
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#8B5A3C",
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  chatBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  chatBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "600",
   },
   circleWrapper: {
     alignItems: "center",

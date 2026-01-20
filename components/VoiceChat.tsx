@@ -5,8 +5,22 @@ import { callGeminiAPI } from "@/utils/gemini";
 import { Audio } from "expo-av";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, View } from "react-native";
+import { ChatSidebar } from "./ChatSidebar";
 import { voiceChatStyles } from "./VoiceChat.styles";
 import { VoiceChatUI } from "./VoiceChatUI";
+
+/**
+ * Conversation Entry Type
+ *
+ * This defines the structure of each conversation entry.
+ * Think of it like a blueprint for what data we store.
+ */
+type ConversationEntry = {
+  id: string; // Unique identifier (like a timestamp or random string)
+  question: string; // What the user asked
+  answer: string; // What the AI responded
+  timestamp: Date; // When the conversation happened
+};
 
 export default function VoiceChat() {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,6 +30,15 @@ export default function VoiceChat() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const [micLevel, setMicLevel] = useState(0);
+
+  // Conversation History State
+  // useState stores data that changes over time
+  // conversations is an array that will hold all our Q&A pairs
+  const [conversations, setConversations] = useState<ConversationEntry[]>([]);
+
+  // Sidebar Visibility State
+  // isSidebarVisible controls whether the chat sidebar is shown or hidden
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
   // Refs for web microphone metering
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -27,36 +50,65 @@ export default function VoiceChat() {
 
   // Web Speech API hook
   const recognitionRef = useWebSpeechRecognition(setTranscript);
-  
+
   // Web Speech Synthesis hook for audio output
-  const { speak, stopSpeaking, isSpeaking, audioLevel: outputAudioLevel } = useWebSpeechSynthesis();
+  const {
+    speak,
+    stopSpeaking,
+    isSpeaking,
+    audioLevel: outputAudioLevel,
+  } = useWebSpeechSynthesis();
 
   // Call Gemini API with the transcript
-  const handleGeminiCall = useCallback(async (userMessage: string) => {
-    if (!userMessage.trim()) {
-      console.log("Empty transcript, skipping AI call");
-      return;
-    }
-
-    setIsLoadingAIResponse(true);
-    setAIResponse("");
-
-    try {
-      const responseText = await callGeminiAPI(userMessage);
-      setAIResponse(responseText);
-      console.log("✅ Gemini API response:", responseText);
-      
-      // Speak the AI response using text-to-speech
-      if (Platform.OS === "web") {
-        speak(responseText);
+  const handleGeminiCall = useCallback(
+    async (userMessage: string) => {
+      if (!userMessage.trim()) {
+        console.log("Empty transcript, skipping AI call");
+        return;
       }
-    } catch (error: any) {
-      console.error("❌ Gemini API error:", error);
-      setAIResponse(`Error: ${error.message || "Failed to get AI response"}`);
-    } finally {
-      setIsLoadingAIResponse(false);
-    }
-  }, [speak]);
+
+      setIsLoadingAIResponse(true);
+      setAIResponse("");
+
+      try {
+        const responseText = await callGeminiAPI(userMessage);
+        setAIResponse(responseText);
+        console.log("✅ Gemini API response:", responseText);
+
+        // Speak the AI response using text-to-speech
+        if (Platform.OS === "web") {
+          speak(responseText);
+        }
+
+        // Save conversation to history
+        // This creates a new conversation entry with:
+        // - A unique ID (using timestamp + random number)
+        // - The user's question
+        // - The AI's answer
+        // - Current timestamp
+        const newConversation: ConversationEntry = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          question: userMessage,
+          answer: responseText,
+          timestamp: new Date(),
+        };
+
+        // Add the new conversation to our history array
+        // setConversations creates a new array with the old conversations + new one
+        // We use the spread operator (...) to copy all existing conversations
+        setConversations((prevConversations) => [
+          ...prevConversations,
+          newConversation,
+        ]);
+      } catch (error: any) {
+        console.error("❌ Gemini API error:", error);
+        setAIResponse(`Error: ${error.message || "Failed to get AI response"}`);
+      } finally {
+        setIsLoadingAIResponse(false);
+      }
+    },
+    [speak]
+  );
 
   const stopWebMicMonitor = useCallback(async () => {
     if (animationFrameRef.current !== null) {
@@ -288,6 +340,18 @@ export default function VoiceChat() {
     setMicLevel(0);
   };
 
+  // Toggle sidebar visibility
+  // This function flips the isSidebarVisible state between true and false
+  const toggleSidebar = () => {
+    setIsSidebarVisible((prev) => !prev); // !prev means "not previous value"
+  };
+
+  // Clear all conversations
+  // This resets the conversations array to empty
+  const clearChat = () => {
+    setConversations([]);
+  };
+
   useEffect(() => {
     return () => {
       stopWebMicMonitor();
@@ -300,6 +364,8 @@ export default function VoiceChat() {
 
   return (
     <View style={voiceChatStyles.container}>
+      {/* Chat Icon Button - Top Right */}
+      {/* This button toggles the sidebar when clicked */}
       <VoiceChatUI
         isRecording={isRecording}
         transcript={transcript}
@@ -310,6 +376,16 @@ export default function VoiceChat() {
         isSpeaking={isSpeaking}
         onToggleRecording={handlePress}
         onCancel={handleCancel}
+        onToggleSidebar={toggleSidebar}
+        conversationCount={conversations.length}
+      />
+
+      {/* Chat Sidebar - Shows conversation history */}
+      <ChatSidebar
+        isVisible={isSidebarVisible}
+        conversations={conversations}
+        onClose={() => setIsSidebarVisible(false)}
+        onClearChat={clearChat}
       />
     </View>
   );

@@ -1,11 +1,9 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Easing,
   Image,
-  Platform,
   Pressable,
   Text,
   View,
@@ -23,6 +21,8 @@ type VoiceChatUIProps = {
   isSpeaking: boolean;
   onToggleRecording: () => void;
   onCancel: () => void;
+  onToggleSidebar: () => void;
+  conversationCount: number;
 };
 
 export function VoiceChatUI({
@@ -35,6 +35,8 @@ export function VoiceChatUI({
   isSpeaking,
   onToggleRecording,
   onCancel,
+  onToggleSidebar,
+  conversationCount,
 }: VoiceChatUIProps) {
   const statusAnimated = useRef(new Animated.Value(1)).current;
   const circleScale = useRef(new Animated.Value(1)).current;
@@ -125,6 +127,26 @@ export function VoiceChatUI({
 
   return (
     <View style={voiceChatStyles.stage}>
+      {/* Chat Icon Button - Top Right */}
+      {/* This button appears in the top right corner */}
+      {/* Pressable is like a button - it responds to touch/click */}
+      <Pressable
+        style={voiceChatStyles.chatIconButton}
+        onPress={onToggleSidebar}
+        accessibilityRole="button"
+        accessibilityLabel={`Open conversation history. ${conversationCount} conversations`}
+      >
+        <FontAwesome name="comments" size={22} color="#8B5A3C" />
+        {/* Badge showing number of conversations */}
+        {conversationCount > 0 && (
+          <View style={voiceChatStyles.chatBadge}>
+            <Text style={voiceChatStyles.chatBadgeText}>
+              {conversationCount > 99 ? "99+" : conversationCount}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+
       <View
         style={[
           voiceChatStyles.circleWrapper,
@@ -146,9 +168,9 @@ export function VoiceChatUI({
           accessibilityLabel={circleAccessibilityLabel}
         >
           <Image
-            source={require("@/assets/images/circle-color.png")}
+            source={require("@/assets/images/brown-galaxy.jpg")}
             style={voiceChatStyles.circleImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </Animated.View>
       </View>
@@ -193,36 +215,7 @@ export function VoiceChatUI({
         </Pressable>
       </View>
 
-      {transcript ? (
-        <View style={voiceChatStyles.transcriptContainer}>
-          <Text style={voiceChatStyles.label}>You said</Text>
-          <Text style={voiceChatStyles.transcript}>{transcript}</Text>
-        </View>
-      ) : (
-        !isRecording && (
-          <Text style={voiceChatStyles.placeholder}>
-            Tap the microphone to begin speaking
-          </Text>
-        )
-      )}
-
-      {aiResponse ? (
-        <View style={voiceChatStyles.responseContainer}>
-          <Text style={voiceChatStyles.label}>Assistant</Text>
-          <Text style={voiceChatStyles.AI}>{aiResponse}</Text>
-        </View>
-      ) : isLoadingAI ? (
-        <View style={voiceChatStyles.responseContainer}>
-          <ActivityIndicator size="small" color="#8B5A3C" />
-          <Text style={voiceChatStyles.loadingText}>AI is thinking...</Text>
-        </View>
-      ) : null}
-
-      {Platform.OS !== "web" && !transcript && (
-        <Text style={voiceChatStyles.note}>
-          Mobile: Audio recorded. Integrate Deepgram for STT.
-        </Text>
-      )}
+      {/* Transcript and response containers removed - conversation history is now in sidebar */}
     </View>
   );
 }
