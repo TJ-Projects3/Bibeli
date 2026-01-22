@@ -1,15 +1,15 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
   Easing,
-  Image,
   Pressable,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
 import { voiceChatStyles } from "./VoiceChat.styles";
+import { VoiceOrb, type VoiceOrbState } from "./VoiceOrb";
 
 type VoiceChatUIProps = {
   isRecording: boolean;
@@ -125,6 +125,14 @@ export function VoiceChatUI({
   const { width } = useWindowDimensions();
   const circleSize = Math.min(width * 0.55, 240);
 
+  // Derive orb state for VoiceOrb component
+  const orbState: VoiceOrbState = useMemo(() => {
+    if (isLoadingAI) return "thinking";
+    if (isRecording) return "listening";
+    if (isSpeaking) return "speaking";
+    return "idle";
+  }, [isLoadingAI, isRecording, isSpeaking]);
+
   return (
     <View style={voiceChatStyles.stage}>
       {/* Chat Icon Button - Top Right */}
@@ -167,10 +175,11 @@ export function VoiceChatUI({
           accessibilityRole="image"
           accessibilityLabel={circleAccessibilityLabel}
         >
-          <Image
-            source={require("@/assets/images/brown-galaxy.jpg")}
-            style={voiceChatStyles.circleImage}
-            resizeMode="cover"
+          <VoiceOrb
+            size={circleSize}
+            state={orbState}
+            micLevel={micLevel}
+            outputAudioLevel={outputAudioLevel}
           />
         </Animated.View>
       </View>
